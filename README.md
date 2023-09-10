@@ -1,4 +1,4 @@
-# MesoKinG 求解器
+# Meso
 
 ## 已实现
 <hr>
