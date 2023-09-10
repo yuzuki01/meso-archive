@@ -1,5 +1,7 @@
 # Meso
 
+基于气体动理学的 CFD 求解器，主要是 Discrete Unified Gas Kinetic Scheme (DUGKS) 的实现。
+
 ## 已实现
 <hr>
 <li>启动参数解析</li>
