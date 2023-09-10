@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="mesh"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="mesh">
+				<Option output="D:/Solver/meso-source/build/mesh.dll" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Solver/meso-source/src/Mesh/../include"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 mesh"/>
+					<CompileFile command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="mesh/fast">
+				<Option output="D:/Solver/meso-source/build/mesh.dll" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Solver/meso-source/src/Mesh/../include"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="D:/App/MinGW/mingw-w64-posix-seh/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 mesh/fast"/>
+					<CompileFile command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/App/MinGW/mingw-w64-posix-seh/bin/mingw32-make.exe -f &quot;D:/Solver/meso-source/src/Mesh/cmake-build-minsizerel/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="D:/Solver/meso-source/src/Mesh/MeshBuild.cpp">
+			<Option target="mesh"/>
+		</Unit>
+		<Unit filename="D:/Solver/meso-source/src/Mesh/MeshGeom.cpp">
+			<Option target="mesh"/>
+		</Unit>
+		<Unit filename="D:/Solver/meso-source/src/Mesh/MeshObject.cpp">
+			<Option target="mesh"/>
+		</Unit>
+		<Unit filename="D:/Solver/meso-source/src/Mesh/MeshReader.cpp">
+			<Option target="mesh"/>
+		</Unit>
+		<Unit filename="D:/Solver/meso-source/src/Mesh/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

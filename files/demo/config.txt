@@ -1,0 +1,63 @@
+% ####################
+% # 这是一个示例文件 #
+% ####################
+
+CASE-INFO
+
+% 算例名称 <必须>
+ CASE_NAME       demo
+% 物理空间网格 <必须>
+ PHY_MESH        demo.neu
+% 速度空间网格 <必须>
+ DVS_MESH        NULL
+% 求解器类型 <必须>
+ SOLVER          solver
+% 并行线程数 <必须>
+ THREAD_NUM      10
+
+END
+
+PARAM-INFO
+% 流体力学参数 <根据求解器选择变量>
+% dugks@incompressible    requires    Re, Ma
+
+ Re             -1
+ Ma             -1
+ Kn             -1
+
+% CFL 数 <必须>
+ CFL            0.9
+% 无量纲气体常数 <必须>
+ R              0.5
+% 无量纲特征长度 <必须>
+ LENGTH         1.0
+% 无量纲参考密度 <必须>
+ DENSITY        1.0
+% 无量纲参考温度 <必须>
+ TEMPERATURE    1.0
+END
+
+BOUNDARY-INFO
+% 定义边界信息文本块
+
+DEF
+    % 边界名称 <必须>
+    NAME        Driven
+    % 边界类型 <必须>
+    TYPE        isothermal_wall
+    % 边界密度 <非必须>
+    % DENSITY   1.0
+    % 边界温度 <非必须>
+    TEMPERATURE 1.0
+    % 边界速度分量 <非必须, 默认 velocity=<0,0,0>>
+    VELOCITY-X      0.1
+    % VELOCITY-Y    0.0
+    % VELOCITY-Z    0.0
+END_OF_DEF
+
+DEF
+    NAME         Wall
+    TYPE         isothermal_wall
+END_OF_DEF
+
+END

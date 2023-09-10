@@ -1,0 +1,56 @@
+% ####################
+% # 这是一个示例文件 #
+% ####################
+
+CASE-INFO
+
+% 算例名称 <必须>
+ CASE_NAME       aoki
+% 物理空间网格 <必须>
+ PHY_MESH        aoki_cavity_3600.neu
+% 速度空间网格 <必须>
+ DVS_MESH        dvs_make.neu
+% 求解器类型 <必须>
+ SOLVER          dugks@aoki
+% 并行线程数 <必须>
+ THREAD_NUM      14
+
+END
+
+PARAM-INFO
+ Kn             0.5
+
+% CFL 数 <必须>
+ CFL            0.5
+% 无量纲气体常数 <必须>
+ R              0.5
+% 无量纲特征长度 <必须>
+ LENGTH         1.0
+% 无量纲参考密度 <必须>
+ DENSITY        1.0
+% 无量纲参考温度 <必须>
+ TEMPERATURE    1.0
+END
+
+BOUNDARY-INFO
+% 定义边界信息文本块
+
+DEF
+    % 边界名称 <必须>
+    NAME        hot_wall
+    % 边界类型 <必须>
+    TYPE        isothermal_wall
+    % 边界温度 <非必须>
+    TEMPERATURE 2.0
+END_OF_DEF
+
+DEF
+    % 边界名称 <必须>
+    NAME        cold_wall
+    % 边界类型 <必须>
+    TYPE        isothermal_wall
+    % 边界温度 <非必须>
+    TEMPERATURE 1.0
+END_OF_DEF
+
+END
