@@ -11,7 +11,6 @@
 <li>2D / 3D 网格界面构建</li>
 <li>2D / 3D 网格几何参数计算</li>
 <li>2D / 3D 网格法向量构建</li>
-<li>支持数组运算的分布函数基类</li>
 <li>网格梯度通用型求解函数</li>
 <li>不可压缩 DUGKS 求解器 [dugks@incompressible] (D2Q9 & D3Q27)</li>
 <li>残差管理</li>
