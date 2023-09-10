@@ -1,1 +1,0 @@
-  -L"D:/Solver/meso-source/src/API/../../build"  "D:/Solver/meso-source/src/API/../../build/Core.dll" "D:/Solver/meso-source/src/API/../../build/Mesh.dll" "D:/Solver/meso-source/src/API/../../build/Solver.dll" -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
