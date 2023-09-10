@@ -3,7 +3,7 @@ import time
 import zipfile
 from colorama import init, Fore, Back, Style
 
-skip_dir = {".idea": 999, "cmake-build-minsizerel": 999, "__pycache__": 999,
+skip_dir = {".idea": 999, ".git": 999, "cmake-build-minsizerel": 999, "__pycache__": 999,
             "build": 0, "pack": 0}
 
 
