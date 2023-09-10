@@ -20,7 +20,7 @@ int handle_solver(ConfigReader &reader) {
     return 0;
 }
 
-// 显示实例化
+// 显式实例化
 #ifdef INCLUDE_DUGKS_INCOMPRESSIBLE
 template int handle_solver<DUGKS_INCOMPRESSIBLE>(ConfigReader &reader);
 #endif
