@@ -29,7 +29,7 @@
 ### 构建项目
 
 ```python build.py```
-<p>该脚本能构建出所有动态链接库和可执行文件</p>
+<p>该脚本能构建出所有动态链接库和可执行文件，在 Windows 10 和 Ubuntu 22.04 下都构建成功过。</p>
 
 ```python build_api.py```
 <p>该脚本能构建出 api 动态链接库，可以使用 Python ctypes 调用</p>
@@ -39,7 +39,7 @@
 
 ### 方法一：可执行程序
 
-<p>进入可执行程序 MesoKinG 所在目录：</p>
+<p>进入可执行程序 meso 所在目录：</p>
 
 ```meso <command>```
 
