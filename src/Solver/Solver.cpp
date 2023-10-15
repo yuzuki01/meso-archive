@@ -242,6 +242,7 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
     D = mesh.dimension();
     if (D != 2) throw std::invalid_argument("Solver wbdugks@shakhov caught unsupported dimension.");
     gamma = (5.0 + K) / (3.0 + K);
+    Cv = (3.0 + K) * R / 2.0;
     miu0 = 5.0 * sqrt(Pi) * Kn / 16.0;
     gravity.y = -2.0 * gamma * RT * pow(Ma / Fr, 2) / L;
     dt = stod(reader["CFL"]) * mesh.min_mesh_size / DVS.max_discrete_velocity;
@@ -264,14 +265,14 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
 void WBDUGKS_SHAKHOV::info() {
     pprint::note << "Solver info:";
     pprint::note(prefix);
-    pprint::info << output_data_to_console({"Density", "Length", "MinMS", "MaxDV"},
-                                           {rho, L, mesh.min_mesh_size, DVS.max_discrete_velocity});
+    pprint::info << output_data_to_console({"Density", "Length", "R", "T"},
+                                           {rho, L, R, T});
     pprint::info();
     pprint::info << output_data_to_console({"Kn", "Ma", "Pr", "Fr"},
                                            {Kn, Ma, Pr, Fr});
     pprint::info();
-    pprint::info << output_data_to_console({"R", "T"},
-                                           {R, T});
+    pprint::info << output_data_to_console({"MinMS", "MaxDV"},
+                                           {mesh.min_mesh_size, DVS.max_discrete_velocity});
     pprint::info();
     mesh.info();
     DVS.info();

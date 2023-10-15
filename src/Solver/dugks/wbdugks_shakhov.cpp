@@ -119,7 +119,17 @@ void Scheme::init() {
 double
 Scheme::g_eq(double density, double temperature, double cc) const {
     double RT2 = 2.0 * R * temperature;
-    return density * exp(-cc / RT2);
+    double A = Pi * RT2;
+    switch (D) {
+        case 2:
+            break;
+        case 3:
+            A = pow(A, 3.0 / 2.0);
+            break;
+        default:
+            throw std::invalid_argument("Scheme::g_eq unsupported dimension.");
+    }
+    return density * exp(-cc / RT2) / A;
 }
 
 double
@@ -527,6 +537,35 @@ void Scheme::do_save() {
             }
         }
     }
+    count = 0;
+    fp << std::endl << "## heat_flux-x" << std::endl;
+    for (auto &cell : CELLS) {
+        fp << "\t" << std::setprecision(DATA_PRECISION) << cell.heat_flux.x;
+        if (count++ >= LINE_DATA_NUM) {
+            fp << std::endl;
+            count = 0;
+        }
+    }
+    count = 0;
+    fp << std::endl << "## heat_flux-y" << std::endl;
+    for (auto &cell : CELLS) {
+        fp << "\t" << std::setprecision(DATA_PRECISION) << cell.heat_flux.y;
+        if (count++ >= LINE_DATA_NUM) {
+            fp << std::endl;
+            count = 0;
+        }
+    }
+    if (mesh.dimension() == 3) {
+        count = 0;
+        fp << std::endl << "## heat_flux-z" << std::endl;
+        for (auto &cell : CELLS) {
+            fp << "\t" << std::setprecision(DATA_PRECISION) << cell.heat_flux.z;
+            if (count++ >= LINE_DATA_NUM) {
+                fp << std::endl;
+                count = 0;
+            }
+        }
+    }
     // write geom
     fp << std::endl << "## Geom" << std::endl;
     for (auto &cell : mesh.CELLS) {
@@ -565,13 +604,16 @@ void Scheme::do_residual() {
     pprint::info(prefix);
     switch (mesh.dimension()) {
         case 2:
-            pprint::info << output_data_to_console({"density", "temperature", "velocity-x", "velocity-y"},
-                                                   result);
+            pprint::info << output_data_to_console(
+                    {"density", "temperature", "velocity-x", "velocity-y", "heat_flux-x", "heat_flux-y"},
+                    result);
             pprint::info();
             break;
         case 3:
-            pprint::info << output_data_to_console({"density", "temperature", "velocity-x", "velocity-y", "velocity-z"},
-                                                   result);
+            pprint::info << output_data_to_console(
+                    {"density", "temperature", "velocity-x", "velocity-y", "velocity-z", "heat_flux-x", "heat_flux-y",
+                     "heat_flux-z"},
+                    result);
             pprint::info();
             break;
         default:
