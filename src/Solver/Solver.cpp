@@ -201,3 +201,77 @@ void DUGKS_AOKI::info() {
     mesh.info();
     DVS.info();
 }
+
+WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
+    /// 参数赋值
+    case_name = reader["CASE_NAME"];
+    continue_to_run = false;
+    is_crashed = false;
+    step = 0;
+    Kn = stod(reader["Kn"]);
+    Ma = stod(reader["Ma"]);
+    Fr = stod(reader["Fr"]);
+    Pr = stod(reader["Pr"]);
+    gamma = stod(reader["gamma"]);
+    R = stod(reader["R"]);
+    T = stod(reader["TEMPERATURE"]);
+    rho = stod(reader["DENSITY"]);
+    L = stod(reader["LENGTH"]);
+    K = stoi(reader["K"]);
+    /// 网格
+    mesh = GenerateMeshFromConfig(reader, MeshTypePHY);
+    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS);
+    for (auto &mark : reader.marks) {
+        mesh.set_mark_params(mark);
+    }
+    /// Generate shadow cell
+    for (auto &mark : mesh.MARKS) {
+        if (mark.type == 5 || mark.type == 6) {
+            // mark.type is "symmetry" or "periodic"
+            for (auto &mark_elem : mark.MARK_ELEM) {
+                MESH::construct_shadow_cell(mesh.FACES[mark_elem.face_id], mesh);
+            }
+        }
+    }
+    mesh_total_volume = 0.0;
+    /// 计算参数
+    double u;
+    mesh_cell_num = mesh.CELLS.size();
+    mesh_face_num = mesh.FACES.size();
+    D = mesh.dimension();
+    if (D != 2) throw std::invalid_argument("Solver wbdugks@shakhov caught unsupported dimension.");
+    miu0 = ;
+    u = Ma * sqrt(gamma * R * T);
+    gravity
+    dt = stod(reader["CFL"]) * mesh.min_size / DVS.max_discrete_velocity;
+    half_dt = dt / 2.0;
+    /// file
+    bool result = create_dir("./case/" + case_name + "/result") && create_dir("./case/" + case_name + "/cache");
+    if (!result) {
+        pprint::error << "Cannot create dir.";
+        pprint::error(prefix);
+        throw std::invalid_argument("Cannot create dir.");
+    }
+    /// OpenMp
+    int thread_num = stoi(reader["THREAD_NUM"]);
+    omp_set_num_threads(thread_num);
+    pprint::note << "Set OpenMP thread num = " << thread_num
+                 << " (available:" << omp_get_num_procs() << ").";
+    pprint::note(prefix);
+}
+
+void WBDUGKS_SHAKHOV::info() {
+    pprint::note << "Solver info:";
+    pprint::note(prefix);
+    pprint::info << output_data_to_console({"Density", "Length", "MinMS", "MaxDV"},
+                                           {rho, L, mesh.min_mesh_size, DVS.max_discrete_velocity});
+    pprint::info();
+    pprint::info << output_data_to_console({"Kn", "Ma", "Pr", "Fr"},
+                                           {Kn, Ma, Pr, Fr});
+    pprint::info();
+    pprint::info << output_data_to_console({"R", "T"},
+                                           {R, T});
+    pprint::info();
+    mesh.info();
+    DVS.info();
+}

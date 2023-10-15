@@ -21,7 +21,7 @@
 ## 待实现
 
 <hr>
-<li>dugks@shakhov 可压缩求解器</li>
+<li>wbdugks@shakhov 可压缩求解器</li>
 <hr>
 
 ## Quick Start

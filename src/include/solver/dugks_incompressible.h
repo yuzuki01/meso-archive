@@ -40,8 +40,8 @@ public:
         /// 最小二乘法
         LeastSecondParam lsp;
         /// 宏观量
-        double density;
-        Vector velocity;
+        double density, temperature;
+        Vector velocity, heat_flux;
         /// 分布函数
         VecDouble f_t, f_bp;
         Vec(Vector) slope_f;
@@ -65,8 +65,8 @@ public:
         DUGKS_INCOMPRESSIBLE *solver;
         int id;
         /// 宏观量
-        double density;
-        Vector velocity;
+        double density, temperature;
+        Vector velocity, heat_flux;
         /// 分布函数
         VecDouble f, f_b;
 
