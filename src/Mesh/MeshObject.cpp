@@ -177,8 +177,13 @@ void Mesh::info() {
     if (name == "NULL") return;
     std::string type_name, state = "unknown";
     switch (type) {
+        case MeshTypeDVS_ParseAsPHY:
         case MeshTypePHY:
-            type_name = "PHY";
+            if (type == MeshTypePHY) {
+                type_name = "PHY";
+            } else if (type == MeshTypeDVS_ParseAsPHY) {
+                type_name = "DVS_ParseAsPHY";
+            }
             switch (status) {
                 case 1:
                     state = "waiting for this->BuildInterface()";

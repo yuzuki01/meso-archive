@@ -17,6 +17,7 @@ MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, int mesh_type) {
             mesh.BuildMesh();
             return mesh;
         }
+        case MeshTypeDVS_ParseAsPHY:
         case MeshTypeDVS: {
             MESH::Mesh mesh(mesh_type, reader["DVS_MESH"]);
             if (reader["DVS_MESH"] == "NULL") {
@@ -212,7 +213,7 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
     Ma = stod(reader["Ma"]);
     Fr = stod(reader["Fr"]);
     Pr = stod(reader["Pr"]);
-    gamma = stod(reader["gamma"]);
+    vhs_index = stod(reader["VHS_INDEX"]);
     R = stod(reader["R"]);
     T = stod(reader["TEMPERATURE"]);
     rho = stod(reader["DENSITY"]);
@@ -220,7 +221,7 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
     K = stoi(reader["K"]);
     /// 网格
     mesh = GenerateMeshFromConfig(reader, MeshTypePHY);
-    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS);
+    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS_ParseAsPHY);  // 按 PHY 构建，获取 near_cell 信息
     for (auto &mark : reader.marks) {
         mesh.set_mark_params(mark);
     }
@@ -235,15 +236,15 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
     }
     mesh_total_volume = 0.0;
     /// 计算参数
-    double u;
+    double RT = R * T;
     mesh_cell_num = mesh.CELLS.size();
     mesh_face_num = mesh.FACES.size();
     D = mesh.dimension();
     if (D != 2) throw std::invalid_argument("Solver wbdugks@shakhov caught unsupported dimension.");
-    miu0 = ;
-    u = Ma * sqrt(gamma * R * T);
-    gravity
-    dt = stod(reader["CFL"]) * mesh.min_size / DVS.max_discrete_velocity;
+    gamma = (5.0 + K) / (3.0 + K);
+    miu0 = 5.0 * sqrt(Pi) * Kn / 16.0;
+    gravity.y = -2.0 * gamma * RT * pow(Ma / Fr, 2) / L;
+    dt = stod(reader["CFL"]) * mesh.min_mesh_size / DVS.max_discrete_velocity;
     half_dt = dt / 2.0;
     /// file
     bool result = create_dir("./case/" + case_name + "/result") && create_dir("./case/" + case_name + "/cache");

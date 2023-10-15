@@ -12,6 +12,7 @@
 #define MeshPoin MESH::Mesh*
 #define MeshTypePHY 0
 #define MeshTypeDVS 1
+#define MeshTypeDVS_ParseAsPHY 2
 
 
 /// 3 维向量

@@ -28,6 +28,7 @@ public:
     double rho, R, L, T, gamma, Cv;
     double miu0, vhs_index;
     Vector gravity;
+
     /// 算法函数
     inline double g_eq(double density, double temperature,
                        double cc) const;
@@ -47,8 +48,7 @@ public:
     public:
         WBDUGKS_SHAKHOV *solver;
         int id;
-        Vec(Residual)
-        residual;
+        Vec(Residual) residual;
         /// 最小二乘法
         LeastSecondParam lsp;
         /// 宏观量
@@ -56,9 +56,7 @@ public:
         Vector velocity, heat_flux;
         /// 分布函数
         VecDouble g_t, g_bp, h_t, h_bp;
-        Vec(Vector)
-        slope_g,
-        slope_h;
+        Vec(Vector) slope_g, slope_h;
 
         /// 函数
         Cell(int cell_id, WBDUGKS_SHAKHOV *Solver);
@@ -97,11 +95,8 @@ public:
     };
 
     /// 容器
-    Vec(Cell)
-    CELLS,
-    SHADOW_CELLS;
-    Vec(Interface)
-    FACES;
+    Vec(Cell) CELLS, SHADOW_CELLS;
+    Vec(Interface) FACES;
 
     /// 函数
     explicit WBDUGKS_SHAKHOV(ConfigReader &reader);

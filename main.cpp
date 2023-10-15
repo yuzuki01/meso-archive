@@ -73,6 +73,8 @@ int handle_case(const std::string &path) {
         return handle_solver<DUGKS_INCOMPRESSIBLE>(reader);
     } else if (solver_name == "dugks@aoki") {
         return handle_solver<DUGKS_AOKI>(reader);
+    } else if (solver_name == "wbdugks@shakhov") {
+        return handle_solver<WBDUGKS_SHAKHOV>(reader);
     }
     return 0;
 }

@@ -184,6 +184,7 @@ void Mesh::BuildNormalVector() {
 void Mesh::BuildMesh() {
     double cost = clock();
     switch (type) {
+        case MeshTypeDVS_ParseAsPHY:
         case MeshTypePHY:     // 物理空间网格
             BuildCellGeom();
             BuildInterface();
