@@ -51,12 +51,14 @@ public:
         Vec(Residual) residual;
         /// 最小二乘法
         LeastSecondParam lsp;
+        LeastSecondParam lsp_dvs;
         /// 宏观量
         double density, temperature;
         Vector velocity, heat_flux;
         /// 分布函数
         VecDouble g_t, g_bp, h_t, h_bp;
         Vec(Vector) slope_g, slope_h;
+        VecDouble source_g, source_h;
 
         /// 函数
         Cell(int cell_id, WBDUGKS_SHAKHOV *Solver);
@@ -68,6 +70,8 @@ public:
         void update_macro_var();
 
         void update_f_t();
+
+        void update_force();
 
         std::string info() const;
     };

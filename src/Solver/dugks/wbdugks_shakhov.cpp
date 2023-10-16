@@ -19,20 +19,25 @@ SCell::Cell(int cell_id, WBDUGKS_SHAKHOV *Solver) {
     density = temperature = 0.0;
     // 最小二乘法
     lsp = GenerateLeastSecondParam(id, solver->mesh);
+    for (int i = 0; i < dvs_num; i++) lsp_dvs = GenerateLeastSecondParam(i, solver->DVS);
     // 分布函数
     g_t.resize(dvs_num, 0.0);
     g_bp.resize(dvs_num, 0.0);
     slope_g.resize(dvs_num, Vector(0.0, 0.0, 0.0));
+    source_g.resize(dvs_num, 0.0);  /// 源项
     h_t.resize(dvs_num, 0.0);
     h_bp.resize(dvs_num, 0.0);
     slope_h.resize(dvs_num, Vector(0.0, 0.0, 0.0));
+    source_h.resize(dvs_num, 0.0);  /// 源项
     // shrink to fit
     g_t.shrink_to_fit();
     g_bp.shrink_to_fit();
     slope_g.shrink_to_fit();
+    source_g.shrink_to_fit();
     h_t.shrink_to_fit();
     h_bp.shrink_to_fit();
     slope_h.shrink_to_fit();
+    source_h.shrink_to_fit();
 }
 
 SFace::Interface(int face_id, WBDUGKS_SHAKHOV *Solver) {
@@ -195,11 +200,10 @@ void SCell::update_gradient() {
         }
         switch (solver->mesh.dimension()) {
             case 2:
-                slope_g[i] = {lsp.Cx * Sgr, lsp.Cy * Sgr, 0.0};
-                slope_h[i] = {lsp.Cx * Shr, lsp.Cy * Shr, 0.0};
-                break;
             case 3:
-                throw std::invalid_argument("Caught dimension error when computing gradient.");
+                slope_g[i] = {lsp.Cx * Sgr, lsp.Cy * Sgr, lsp.Cz * Sgr};
+                slope_h[i] = {lsp.Cx * Shr, lsp.Cy * Shr, lsp.Cz * Shr};
+                break;
             default:
                 throw std::invalid_argument("update_gradient() dimension error.");
         }
@@ -254,6 +258,75 @@ void SCell::update_f_t() {
         g_t[i] = (4.0 * g_bp[i] - g_t[i]) / 3.0 - flux_g[i];
         h_t[i] = (4.0 * h_bp[i] - h_t[i]) / 3.0 - flux_h[i];
     }
+}
+
+void SCell::update_force() {
+    int dvs_num = solver->DVS.NELEM;
+    /// 计算力项 S = -a * Grad(f)
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = solver->DVS.CELLS[i];
+        int near_num = particle.near_cell_id.size();
+        Vector Sgr(0.0, 0.0, 0.0), Shr(0.0, 0.0, 0.0);
+        for (int j = 0; j < near_num; j++) {
+            auto &near_particle = solver->CELLS[particle.near_cell_id[j]];
+            Sgr += lsp_dvs.weight[j] * (near_particle.g_t[i] - g_t[i]) * lsp_dvs.dr[j];
+            Shr += lsp_dvs.weight[j] * (near_particle.h_t[i] - h_t[i]) * lsp_dvs.dr[j];
+        }
+        Vector gradient_g, gradient_h;
+        gradient_g = {lsp_dvs.Cx * Sgr, lsp_dvs.Cy * Sgr, lsp_dvs.Cz * Sgr};
+        gradient_h = {lsp_dvs.Cx * Shr, lsp_dvs.Cy * Shr, lsp_dvs.Cz * Shr};
+        source_g[i] = -solver->gravity * gradient_g;
+        source_h[i] = -solver->gravity * gradient_h;
+    }
+    /// 计算力对物理量的影响
+    double temperature_f;
+    Vector velocity_f, heat_flux_f;
+    temperature_f = 0.0;
+    velocity_f = heat_flux_f = {0.0, 0.0, 0.0};
+    VecDouble g_tf(dvs_num), h_tf(dvs_num);
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = solver->DVS.CELLS[i];
+        g_tf[i] = g_t[i] + solver->half_dt * source_g[i];
+        h_tf[i] = h_t[i] + solver->half_dt * source_h[i];
+        velocity_f += particle.volume * g_tf[i] * particle.pos;
+    }
+    velocity_f /= density;
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = solver->DVS.CELLS[i];
+        Vector c = particle.pos - velocity_f;
+        double ccg_h = (c * c) * g_tf[i] + h_tf[i];
+        temperature_f += particle.volume * ccg_h;
+        heat_flux_f += particle.volume * ccg_h * c;
+    }
+    temperature_f = (temperature_f - density * (velocity_f * velocity_f)) / (2.0 * solver->Cv);
+    double tau = solver->tau_f(density, temperature);
+    double tau_f = solver->tau_f(density, temperature_f);
+    heat_flux_f *= (2.0 * tau_f) / (2.0 * tau_f + solver->dt * solver->Pr);
+    /// 更新分布函数
+    double C1 = solver->dt / (2.0 * tau_f - solver->dt);
+    double C2 = tau_f / tau;
+    double C3 = (2.0 * tau - solver->dt) / (2.0 * tau_f - solver->dt);
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = solver->DVS.CELLS[i];
+        double cc, cc_f, cq, cq_f, geq, geq_f, g_s, g_sf, h_s, h_sf;
+        Vector c = particle.pos - velocity, c_f = particle.pos - velocity_f;
+        cc = c * c;
+        cc_f = c_f * c_f;
+        cq = c * heat_flux;
+        cq_f = c_f * heat_flux_f;
+        geq = solver->g_eq(density, temperature, cc);
+        g_s = geq + solver->g_pr(density, temperature, cc, cq, geq);
+        geq_f = solver->g_eq(density, temperature_f, cc_f);
+        g_sf = geq_f + solver->g_pr(density, temperature_f, cc_f, cq_f, geq_f);
+        h_s = solver->h_eq(temperature, geq) + solver->h_pr(density, temperature, cc, cq, geq);
+        h_sf = solver->h_eq(temperature_f, geq_f) + solver->h_pr(density, temperature_f, cc_f, cq_f, geq_f);
+        g_t[i] = source_g[i] * tau_f * C1 + C2 * C1 * g_s + C2 * C3 * g_t[i] - C1 * g_sf;
+        h_t[i] = source_h[i] * tau_f * C1 + C2 * C1 * h_s + C2 * C3 * h_t[i] - C1 * h_sf;
+    }
+    /// 更新宏观量
+    velocity = velocity_f;
+    temperature = temperature_f;
+    heat_flux = heat_flux_f;
 }
 
 std::string SCell::info() const {
@@ -373,6 +446,13 @@ void SFace::boundary_condition() {
 
 /// 算法函数
 void Scheme::do_step() {
+    /// pre-forcing
+#pragma omp parallel for
+    for (int j = 0; j < mesh_cell_num; j++) {
+        auto &cell = CELLS[j];
+        cell.update_force();
+    }
+    /// non-forcing DUGKS
 #pragma omp parallel for
     for (int j = 0; j < mesh_cell_num; j++) {
         auto &cell = CELLS[j];
@@ -432,6 +512,12 @@ void Scheme::do_step() {
     for (int j = 0; j < mesh_cell_num; j++) {
         auto &cell = CELLS[j];
         cell.update_macro_var();
+    }
+    /// post-forcing
+#pragma omp parallel for
+    for (int j = 0; j < mesh_cell_num; j++) {
+        auto &cell = CELLS[j];
+        cell.update_force();
     }
 
     //pprint::debug << "face macro var";
