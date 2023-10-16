@@ -268,9 +268,8 @@ void SCell::update_force() {
         int near_num = particle.near_cell_id.size();
         Vector Sgr(0.0, 0.0, 0.0), Shr(0.0, 0.0, 0.0);
         for (int j = 0; j < near_num; j++) {
-            auto &near_particle = solver->CELLS[particle.near_cell_id[j]];
-            Sgr += lsp_dvs.weight[j] * (near_particle.g_t[i] - g_t[i]) * lsp_dvs.dr[j];
-            Shr += lsp_dvs.weight[j] * (near_particle.h_t[i] - h_t[i]) * lsp_dvs.dr[j];
+            Sgr += lsp_dvs.weight[j] * (g_t[particle.near_cell_id[j]] - g_t[i]) * lsp_dvs.dr[j];
+            Shr += lsp_dvs.weight[j] * (h_t[particle.near_cell_id[j]] - h_t[i]) * lsp_dvs.dr[j];
         }
         Vector gradient_g, gradient_h;
         gradient_g = {lsp_dvs.Cx * Sgr, lsp_dvs.Cy * Sgr, lsp_dvs.Cz * Sgr};
@@ -452,6 +451,8 @@ void Scheme::do_step() {
         auto &cell = CELLS[j];
         cell.update_force();
     }
+    //pprint::debug << "pre-forcing update_force()";
+    //pprint::debug("DEBUG");
     /// non-forcing DUGKS
 #pragma omp parallel for
     for (int j = 0; j < mesh_cell_num; j++) {
@@ -513,15 +514,17 @@ void Scheme::do_step() {
         auto &cell = CELLS[j];
         cell.update_macro_var();
     }
+    //pprint::debug << "face macro var";
+    //pprint::debug("DEBUG");
     /// post-forcing
 #pragma omp parallel for
     for (int j = 0; j < mesh_cell_num; j++) {
         auto &cell = CELLS[j];
         cell.update_force();
     }
-
-    //pprint::debug << "face macro var";
+    //pprint::debug << "post-forcing update_force()";
     //pprint::debug("DEBUG");
+
     /// OpenMP loop end
     ++step;
     if (debug_mode) {
