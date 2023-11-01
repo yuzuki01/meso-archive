@@ -128,6 +128,10 @@ std::string output_data_to_console(const VecStr &name, const VecDouble &value);
 
 void output_default_config(const std::string &case_name);
 
+void clear_log(const std::string &case_name);
+
+void output_log(const std::string &case_name, const std::string &log_context, const std::string &prefix);
+
 /**
  * 参数解析
  */

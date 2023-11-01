@@ -460,7 +460,7 @@ void Scheme::do_residual() {
     }
 }
 
-void Scheme::do_crashed(DUGKS_INCOMPRESSIBLE::Cell &cell) {
+void Scheme::do_crashed(Scheme::Cell &cell) {
     is_crashed = true;
     pprint::warn << "Caught crashed value: " << cell.info();
     pprint::warn(prefix);

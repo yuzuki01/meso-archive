@@ -17,6 +17,7 @@
 
 #include "solver/dugks_incompressible.h"
 #include "solver/dugks_aoki.h"
+#include "solver/dugks_shakhov.h"
 #include "solver/wbdugks_shakhov.h"
 
 /// 函数

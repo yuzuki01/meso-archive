@@ -10,6 +10,7 @@ int handle_solver(ConfigReader &reader) {
         return -1;
     }
     if (!is_confirmed("Run solver?")) return 0;
+    if (debug_mode) solver.do_save();
 
     while (solver.continue_to_run) {
         solver.do_step();
@@ -21,12 +22,15 @@ int handle_solver(ConfigReader &reader) {
 }
 
 // 显式实例化
-#ifdef INCLUDE_DUGKS_INCOMPRESSIBLE
+#ifdef SOLVER_DUGKS_INCOMPRESSIBLE
 template int handle_solver<DUGKS_INCOMPRESSIBLE>(ConfigReader &reader);
 #endif
-#ifdef INCLUDE_DUGKS_AOKI
+#ifdef SOLVER_DUGKS_AOKI
 template int handle_solver<DUGKS_AOKI>(ConfigReader &reader);
 #endif
-#ifdef INCLUDE_WBDUGKS_SHAKHOV
+#ifdef SOLVER_DUGKS_SHAKHOV_H
+template int handle_solver<DUGKS_SHAKHOV>(ConfigReader &reader);
+#endif
+#ifdef SOLVER_WBDUGKS_SHAKHOV_H
 template int handle_solver<WBDUGKS_SHAKHOV>(ConfigReader &reader);
 #endif

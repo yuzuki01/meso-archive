@@ -211,3 +211,33 @@ void output_default_config(const std::string &name) {
     }
     fp.close();
 }
+
+void clear_log(const std::string &case_name) {
+    std::stringstream ss;
+    ss << "./case/" << case_name << "/cache/log.txt";
+    std::ofstream fp;
+    fp.open(ss.str(), std::ios::out | std::ios::trunc);
+    // check
+    if (!fp.is_open()) {
+        pprint::error << "Cannot write to file: " << ss.str();
+        pprint::error("Core");
+        throw std::invalid_argument("Cannot write to file.");
+    }
+    fp.close();
+}
+
+void output_log(const std::string &case_name, const std::string &log_context, const std::string &prefix) {
+    std::stringstream ss;
+    ss << "./case/" << case_name << "/cache/log.txt";
+    std::ofstream fp;
+    fp.open(ss.str(), std::ios::out);
+    // check
+    if (!fp.is_open()) {
+        pprint::error << "Cannot write to file: " << ss.str();
+        pprint::error("Core");
+        throw std::invalid_argument("Cannot write to file.");
+    } else {
+        fp << "[" << prefix << "] " << log_context << std::endl;
+    }
+    fp.close();
+}

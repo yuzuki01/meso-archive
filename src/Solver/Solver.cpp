@@ -140,6 +140,7 @@ void DUGKS_INCOMPRESSIBLE::info() {
     DVS.info();
 }
 
+
 DUGKS_AOKI::DUGKS_AOKI(ConfigReader &reader) {
     /// 参数赋值
     case_name = reader["CASE_NAME"];
@@ -203,49 +204,50 @@ void DUGKS_AOKI::info() {
     DVS.info();
 }
 
-WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
+DUGKS_SHAKHOV::DUGKS_SHAKHOV(ConfigReader &reader) {
     /// 参数赋值
     case_name = reader["CASE_NAME"];
     continue_to_run = false;
     is_crashed = false;
     step = 0;
+    K = stoi(reader["K"]);
     Kn = stod(reader["Kn"]);
     Ma = stod(reader["Ma"]);
-    Fr = stod(reader["Fr"]);
     Pr = stod(reader["Pr"]);
-    vhs_index = stod(reader["VHS_INDEX"]);
+    rho = stod(reader["DENSITY"]);
     R = stod(reader["R"]);
     T = stod(reader["TEMPERATURE"]);
-    rho = stod(reader["DENSITY"]);
     L = stod(reader["LENGTH"]);
-    K = stoi(reader["K"]);
-    /// 网格
+    vhs_index = stod(reader["VHS_INDEX"]);
+    if (reader["LIMITER"] == "ON") {
+        limiter = true;
+        limiter_k = stod(reader["LIMITER_K"]);
+        pprint::highlight << "Limiter ON, limiter_k = " << limiter_k;
+        pprint::highlight(prefix);
+    } else {
+        limiter = false;
+        limiter_k = 0.0;
+    }
+    /// 物理网格
     mesh = GenerateMeshFromConfig(reader, MeshTypePHY);
-    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS_ParseAsPHY);  // 按 PHY 构建，获取 near_cell 信息
+    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS_ParseAsPHY);
     for (auto &mark : reader.marks) {
         mesh.set_mark_params(mark);
     }
-    /// Generate shadow cell
-    for (auto &mark : mesh.MARKS) {
-        if (mark.type == 5 || mark.type == 6) {
-            // mark.type is "symmetry" or "periodic"
-            for (auto &mark_elem : mark.MARK_ELEM) {
-                MESH::construct_shadow_cell(mesh.FACES[mark_elem.face_id], mesh);
-            }
-        }
-    }
     mesh_total_volume = 0.0;
     /// 计算参数
-    double RT = R * T;
+    double a, u, RT;
+    D = mesh.dimension();
     mesh_cell_num = mesh.CELLS.size();
     mesh_face_num = mesh.FACES.size();
-    D = mesh.dimension();
-    if (D != 2) throw std::invalid_argument("Solver wbdugks@shakhov caught unsupported dimension.");
     gamma = (5.0 + K) / (3.0 + K);
     Cv = (3.0 + K) * R / 2.0;
-    miu0 = 5.0 * sqrt(Pi) * Kn / 16.0;
-    gravity.y = -2.0 * gamma * RT * pow(Ma / Fr, 2) / L;
-    dt = stod(reader["CFL"]) * mesh.min_mesh_size / DVS.max_discrete_velocity;
+    RT = R * T;
+    a = sqrt(gamma * RT);
+    u = Ma * a;
+    Re = sqrt(2. * gamma / M_PI) * (7 - 2 * vhs_index) * (5 - 2 * vhs_index) / 15. * (Ma / Kn);
+    miu0 = rho * u * L / Re;
+    dt = stod(reader["CFL"]) * (mesh.min_mesh_size / DVS.max_discrete_velocity);
     half_dt = dt / 2.0;
     /// file
     bool result = create_dir("./case/" + case_name + "/result") && create_dir("./case/" + case_name + "/cache");
@@ -254,6 +256,108 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
         pprint::error(prefix);
         throw std::invalid_argument("Cannot create dir.");
     }
+    /// output log
+    clear_log(case_name);
+    // waiting for core-func
+    /// OpenMp
+    int thread_num = stoi(reader["THREAD_NUM"]);
+    omp_set_num_threads(thread_num);
+    pprint::note << "Set OpenMP thread num = " << thread_num
+                 << " (available:" << omp_get_num_procs() << ").";
+    pprint::note(prefix);
+}
+
+void DUGKS_SHAKHOV::info() {
+    pprint::note << "Solver info:";
+    pprint::note(prefix);
+    pprint::info << output_data_to_console({"Kn", "Ma", "Re", "Pr"},
+                                           {Kn, Ma, Re, Pr});
+    pprint::info();
+    pprint::info << output_data_to_console({"Density", "Length", "R", "T"},
+                                           {rho, L, R, T});
+    pprint::info();
+    pprint::info << output_data_to_console({"Gamma", "VHSIndex", "MinMS", "MaxDV"},
+                                           {gamma, vhs_index, mesh.min_mesh_size, DVS.max_discrete_velocity});
+    pprint::info();
+    mesh.info();
+    DVS.info();
+}
+
+WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
+    /// 参数赋值
+    case_name = reader["CASE_NAME"];
+    continue_to_run = false;
+    is_crashed = false;
+    step = 0;
+    K = stoi(reader["K"]);
+    Kn = stod(reader["Kn"]);
+    Ma = stod(reader["Ma"]);
+    Pr = stod(reader["Pr"]);
+    if (reader["Fr"] == MeshReaderReturn_NULL) {
+        force_term = false;
+        Fr = -1.0;
+        pprint::warn << "Detected non-forcing case. You could use Solver<dugks@shakhov> to get a better speed.";
+        pprint::warn(prefix);
+    } else {
+        force_term = true;
+        Fr = stod(reader["Fr"]);
+    }
+    rho = stod(reader["DENSITY"]);
+    R = stod(reader["R"]);
+    T = stod(reader["TEMPERATURE"]);
+    L = stod(reader["LENGTH"]);
+    vhs_index = stod(reader["VHS_INDEX"]);
+    vhs_alpha = stod(reader["VHS_ALPHA"]);
+    vhs_omega = stod(reader["VHS_OMEGA"]);
+    if (reader["LIMITER"] == "ON") {
+        limiter = true;
+        limiter_k = stod(reader["LIMITER_K"]);
+        pprint::highlight << "Limiter ON, limiter_k = " << limiter_k;
+        pprint::highlight(prefix);
+    } else {
+        limiter = false;
+        limiter_k = 0.0;
+    }
+    /// 物理网格
+    mesh = GenerateMeshFromConfig(reader, MeshTypePHY);
+    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS_ParseAsPHY);
+    for (auto &mark : reader.marks) {
+        mesh.set_mark_params(mark);
+    }
+    mesh_total_volume = 0.0;
+    /// 计算参数
+    double a, u, RT;
+    D = mesh.dimension();
+    mesh_cell_num = mesh.CELLS.size();
+    mesh_face_num = mesh.FACES.size();
+    gamma = (5.0 + K) / (3.0 + K);
+    Cv = (3.0 + K) * R / 2.0;
+    RT = R * T;
+    a = sqrt(gamma * RT);
+    u = Ma * a;
+    dynamic_viscosity_ref = Kn * sqrt(Pi) * (
+            (5.0 * (vhs_alpha + 1.0) * (vhs_alpha + 2.0)) / (4.0 * (5.0 - 2.0 * vhs_omega) * (7.0 - 2.0 * vhs_omega))
+            );
+    Re = rho * u * L / dynamic_viscosity_ref;
+    dt = stod(reader["CFL"]) * (mesh.min_mesh_size / DVS.max_discrete_velocity);
+    half_dt = dt / 2.0;
+    /// 源项
+    lsp_dvs.resize(DVS.NELEM);
+    lsp_dvs.shrink_to_fit();
+    for (int i = 0; i < DVS.NELEM; i++) {
+        lsp_dvs[i] = GenerateLeastSecondParam(i, DVS);
+    }
+    gravity = {0.0, -gamma * RT * pow(Ma / Fr, 2) / L, 0.0};
+    /// file
+    bool result = create_dir("./case/" + case_name + "/result") && create_dir("./case/" + case_name + "/cache");
+    if (!result) {
+        pprint::error << "Cannot create dir.";
+        pprint::error(prefix);
+        throw std::invalid_argument("Cannot create dir.");
+    }
+    /// output log
+    clear_log(case_name);
+    // waiting for core-func
     /// OpenMp
     int thread_num = stoi(reader["THREAD_NUM"]);
     omp_set_num_threads(thread_num);
@@ -265,15 +369,20 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
 void WBDUGKS_SHAKHOV::info() {
     pprint::note << "Solver info:";
     pprint::note(prefix);
+    pprint::info << output_data_to_console({"Kn", "Ma", "Re", "Pr", "Fr"},
+                                           {Kn, Ma, Re, Pr, Fr});
+    pprint::info();
     pprint::info << output_data_to_console({"Density", "Length", "R", "T"},
                                            {rho, L, R, T});
     pprint::info();
-    pprint::info << output_data_to_console({"Kn", "Ma", "Pr", "Fr"},
-                                           {Kn, Ma, Pr, Fr});
+    pprint::info << output_data_to_console({"Gamma", "VHSIndex", "MinMS", "MaxDV"},
+                                           {gamma, vhs_index, mesh.min_mesh_size, DVS.max_discrete_velocity});
     pprint::info();
-    pprint::info << output_data_to_console({"MinMS", "MaxDV"},
-                                           {mesh.min_mesh_size, DVS.max_discrete_velocity});
-    pprint::info();
+    if (debug_mode) {
+        pprint::debug << output_data_to_console({"Gravity(Y)"},
+                                                {gravity.y});
+        pprint::debug();
+    }
     mesh.info();
     DVS.info();
 }

@@ -1,17 +1,16 @@
-#ifndef SOLVER_WBDUGKS_SHAKHOV_H
-#define SOLVER_WBDUGKS_SHAKHOV_H
+#ifndef SOLVER_DUGKS_SHAKHOV_H
+#define SOLVER_DUGKS_SHAKHOV_H
 
-#endif //SOLVER_WBDUGKS_SHAKHOV_H
-
+#endif //SOLVER_DUGKS_SHAKHOV_H
 /**
- * Well-Balance DUGKS
+ * Compressible DUGKS
  *      BGK-Shakhov model
  *      Ventaka limiter
  */
 
-class WBDUGKS_SHAKHOV {
+class DUGKS_SHAKHOV {
 public:
-    const std::string prefix = "wbdugks@shakhov";
+    const std::string prefix = "dugks@shakhov";
     /// 网格
     MESH::Mesh mesh;
     MESH::Mesh DVS;
@@ -22,18 +21,16 @@ public:
     std::string case_name;
     bool continue_to_run;
     bool is_crashed;
-    bool limiter, force_term;
+    bool limiter;
     int step;
     double dt, half_dt;
     /// 数学物理参数
     int K, D;
-    double Kn, Ma, Re, Pr, Fr;
+    double Kn, Ma, Re, Pr;
     double rho, T;
     double R, L;
-    double dynamic_viscosity_ref, gamma, Cv;
-    double vhs_index, vhs_alpha, vhs_omega;
+    double miu0, vhs_index, gamma, Cv;
     double limiter_k;
-    Vector gravity;
     /// 算法函数
     inline double g_maxwell(double density, double temperature, double cc) const;
     inline double g_shakhov(double density, double temperature, double cc, double cq, double gm) const;
@@ -42,7 +39,7 @@ public:
     inline double tau_f(double density, double temperature) const;
     inline double venkata_limiter(double wi, double wi_max, double wi_min, double delta_i, double volume) const;
     /// 内部类
-    using Scheme = WBDUGKS_SHAKHOV;
+    using Scheme = DUGKS_SHAKHOV;
     class Cell {
     public:
         Scheme *solver;
@@ -54,7 +51,7 @@ public:
         double density, temperature;
         Vector velocity, heat_flux;
         /// 分布函数
-        VecDouble source_g, source_h;
+        // VecDouble g, h;
         VecDouble g_t, g_bp, Wg_max, Wg_min;
         Vec(Vector) slope_g;
         VecDouble h_t, h_bp, Wh_max, Wh_min;
@@ -66,7 +63,6 @@ public:
         void update_gradient();
         void update_macro_var();
         void update_f_t();
-        void update_force();
 
         std::string info() const;
     };
@@ -90,12 +86,11 @@ public:
         void boundary_condition();
     };
     /// 容器
-    Vec(LeastSecondParam) lsp_dvs;
     Vec(Cell) CELLS;
     Vec(Interface) FACES;
 
     /// 函数
-    explicit WBDUGKS_SHAKHOV(ConfigReader &reader);
+    explicit DUGKS_SHAKHOV(ConfigReader &reader);
 
     void init();
     void info();

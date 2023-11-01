@@ -11,13 +11,13 @@ using namespace MESH;
 
 /// 全局变量
 MapInt MESH::MarkType = {
-        {"interface",       0},
-        {"inlet",           1},
-        {"outlet",          2},
-        {"isothermal_wall", 3},
-        {"adiabat_wall",    4},
-        {"symmetry",        5},
-        {"periodic",        6}
+        {"interface",       BC_INTERFACE},
+        {"inlet",           BC_INLET},
+        {"outlet",          BC_OUTLET},
+        {"isothermal_wall", BC_ISOTHERMAL_WALL},
+        {"adiabat_wall",    BC_ADIABAT_WALL},
+        {"symmetry",        BC_SYMMETRY},
+        {"periodic",        BC_PERIODIC}
 };
 
 /// 结点 Node
@@ -232,7 +232,7 @@ void Mesh::info() {
                  << "   CELL = " << NELEM << "\n"
                  << "   FACE = " << int(FACES.size());
     pprint::info();
-    if (type == 0) {
+    if (type == MeshTypePHY) {
         pprint::info << "   MARK = " << NBSETS;
         pprint::info();
         for (auto &mark : MARKS) mark.info();

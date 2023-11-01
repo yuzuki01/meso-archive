@@ -1,5 +1,5 @@
-#ifndef INCLUDE_DUGKS_INCOMPRESSIBLE
-#define INCLUDE_DUGKS_INCOMPRESSIBLE
+#ifndef SOLVER_DUGKS_INCOMPRESSIBLE
+#define SOLVER_DUGKS_INCOMPRESSIBLE
 #endif
 /**
  * 不可压缩 DUGKS
@@ -66,7 +66,7 @@ public:
         int id;
         /// 宏观量
         double density, temperature;
-        Vector velocity, heat_flux;
+        Vector velocity;
         /// 分布函数
         VecDouble f, f_b;
 

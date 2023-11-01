@@ -1,12 +1,12 @@
 /**
- * Well-Balance DUGKS
+ * DUGKS
  *  with Shakhov-BGK model
  **/
 
 #include <Solver.h>
 
 
-using Scheme = WBDUGKS_SHAKHOV;
+using Scheme = DUGKS_SHAKHOV;
 using SCell = Scheme::Cell;
 using SFace = Scheme::Interface;
 
@@ -23,11 +23,9 @@ SCell::Cell(int cell_id, Scheme *Solver) {
     g_t.resize(dvs_num, 0.0);
     g_bp.resize(dvs_num, 0.0);
     slope_g.resize(dvs_num, Vector(0.0, 0.0, 0.0));
-    source_g.resize(dvs_num, 0.0);
     h_t.resize(dvs_num, 0.0);
     h_bp.resize(dvs_num, 0.0);
     slope_h.resize(dvs_num, Vector(0.0, 0.0, 0.0));
-    source_h.resize(dvs_num, 0.0);
     // limiter
     if (solver->limiter) {
         Wg_min.resize(dvs_num, 0.0);
@@ -49,11 +47,9 @@ SCell::Cell(int cell_id, Scheme *Solver) {
     g_t.shrink_to_fit();
     g_bp.shrink_to_fit();
     slope_g.shrink_to_fit();
-    source_g.shrink_to_fit();
     h_t.shrink_to_fit();
     h_bp.shrink_to_fit();
     slope_h.shrink_to_fit();
-    source_h.shrink_to_fit();
 }
 
 SFace::Interface(int face_id, Scheme *Solver) {
@@ -103,10 +99,10 @@ void Scheme::init() {
         scheme_cell.residual.emplace_back(scheme_cell.temperature);
         scheme_cell.residual.emplace_back(scheme_cell.velocity.x);
         scheme_cell.residual.emplace_back(scheme_cell.velocity.y);
-        if (D == 3) scheme_cell.residual.emplace_back(scheme_cell.velocity.z);
+        if (mesh.dimension() == 3) scheme_cell.residual.emplace_back(scheme_cell.velocity.z);
         scheme_cell.residual.emplace_back(scheme_cell.heat_flux.x);
         scheme_cell.residual.emplace_back(scheme_cell.heat_flux.y);
-        if (D == 3) scheme_cell.residual.emplace_back(scheme_cell.heat_flux.z);
+        if (mesh.dimension() == 3) scheme_cell.residual.emplace_back(scheme_cell.heat_flux.z);
         scheme_cell.residual.shrink_to_fit();
     }
     pprint::info << "Create scheme cells with mesh cells.";
@@ -152,7 +148,7 @@ double Scheme::h_shakhov(double density, double temperature, double cc, double c
 
 /// 松弛时间函数
 double Scheme::tau_f(double density, double temperature) const {
-    return dynamic_viscosity_ref * pow(temperature / T, vhs_index) / (density * R * temperature);
+    return miu0 * pow(temperature / T, vhs_index) / (density * R * temperature);
 }
 
 /// Ventaka限制器
@@ -230,8 +226,12 @@ void SCell::update_macro_var() {
     double tau = solver->tau_f(density, temperature);
     heat_flux *= tau / (2.0 * tau + solver->dt * solver->Pr);
 
-    if (std::isnan(density) || std::isnan(temperature) || temperature <= 0.0) {
+    if (std::isnan(density)) {
         solver->do_crashed(*this);
+    }
+    if (temperature < 0.0) {
+        pprint::warn << "Caught negative temperature" << info();
+        pprint::warn();
     }
 }
 
@@ -262,99 +262,10 @@ void SCell::update_f_t() {
     }
 }
 
-void SCell::update_force() {
-    const int dvs_num = solver->DVS.NELEM;
-    Vector c;
-    double cc, cq, gm, C;
-    /// 还原到原始分布函数 f
-    C = solver->half_dt / (2.0 * solver->tau_f(density, temperature) + solver->dt);
-    for (int i = 0; i < dvs_num; i++) {
-        auto &particle = solver->DVS.CELLS[i];
-        c = particle.pos - velocity;
-        cc = c * c;
-        cq = c * heat_flux;
-        gm = solver->g_maxwell(density, temperature, cc);
-        g_t[i] = (1.0 - C) * g_t[i] + C * solver->g_shakhov(density, temperature, cc, cq, gm);
-        h_t[i] = (1.0 - C) * h_t[i] + C * solver->h_shakhov(density, temperature, cc, cq, gm);
-    }
-
-    /// 计算源项 S = -a * Grad(f)
-    /**
-     **************************************
-     * Direct Numerically Discrete Scheme *
-     *    for any Pr number               *
-     **************************************
-     **/
-    Vector Sgr, Shr, gradient_g, gradient_h;
-    for (int i = 0; i < dvs_num; i++) {
-        // 遍历 DVS 单元
-        auto &particle = solver->DVS.CELLS[i];
-        int near_particle_num = particle.near_cell_id.size();
-        Sgr = Shr = {0.0, 0.0, 0.0};
-        for (int j = 0; j < near_particle_num; j++) {
-            Sgr += solver->lsp_dvs[i].weight[j] * (g_t[particle.near_cell_id[j]] - g_t[i]) * solver->lsp_dvs[i].dr[j];
-            Shr += solver->lsp_dvs[i].weight[j] * (h_t[particle.near_cell_id[j]] - h_t[i]) * solver->lsp_dvs[i].dr[j];
-        }
-        gradient_g = {solver->lsp_dvs[i].Cx * Sgr, solver->lsp_dvs[i].Cy * Sgr, solver->lsp_dvs[i].Cz * Sgr};
-        gradient_h = {solver->lsp_dvs[i].Cx * Shr, solver->lsp_dvs[i].Cy * Shr, solver->lsp_dvs[i].Cz * Shr};
-        source_g[i] = -solver->gravity * gradient_g;
-        source_h[i] = -solver->gravity * gradient_h;
-    }
-
-    /**
-     **************************************
-     * HSD Scheme                         *
-     *   for near-equilibrium flow, Pr=1  *
-     **************************************
-     * double RT = solver->R * temperature;
-     * for (int i = 0; i < dvs_num; i++) {
-     *     auto &particle = solver->DVS.CELLS[i];
-     *     c = particle.pos - velocity;
-     *     cc = c * c;
-     *     gm = solver->g_maxwell(density, temperature, cc);
-     *     source_g[i] = (solver->gravity * c) * gm / RT;
-     *     source_h[i] = (solver->gravity * c) * solver->h_maxwell(temperature, gm) / RT;
-     * }
-     **/
-
-    /// 计算分布函数 f*
-    for (int i = 0; i < dvs_num; i++) {
-        g_t[i] += solver->half_dt * source_g[i];
-        h_t[i] += solver->half_dt * source_h[i];
-    }
-    /// 计算宏观量 W*
-    density = temperature = 0.0;
-    velocity = heat_flux = {0.0, 0.0, 0.0};
-    for (int i = 0; i < dvs_num; i++) {
-        auto &particle = solver->DVS.CELLS[i];
-        density += particle.volume * g_t[i];
-        velocity += particle.volume * g_t[i] * particle.pos;
-        temperature += particle.volume * (particle.pos_square * g_t[i] + h_t[i]);
-    }
-    velocity /= density;
-    temperature = ((temperature / density) - (velocity * velocity)) / (2.0 * solver->Cv);
-    for (int i = 0; i < dvs_num; i++) {
-        auto &particle = solver->DVS.CELLS[i];
-        c = particle.pos - velocity;
-        heat_flux += particle.volume * ((c * c) * g_t[i] + h_t[i]) * c;
-    }
-    /// 计算辅助分布函数 f_t*
-    C = -solver->half_dt / solver->tau_f(density, temperature);
-    for (int i = 0; i < dvs_num; i++) {
-        auto &particle = solver->DVS.CELLS[i];
-        c = particle.pos - velocity;
-        cc = c * c;
-        cq = c * heat_flux;
-        gm = solver->g_maxwell(density, temperature, cc);
-        g_t[i] = (1.0 - C) * g_t[i] + C * solver->g_shakhov(density, temperature, cc, cq, gm);
-        h_t[i] = (1.0 - C) * h_t[i] + C * solver->h_shakhov(density, temperature, cc, cq, gm);
-    }
-}
-
 std::string SCell::info() const {
     std::stringstream ss;
     ss << solver->mesh.CELLS[id].info_with_pos() << " density=" << density << " temperature=" << temperature
-       << " velocity=" << velocity.info();
+       << " velocity=" << velocity.info() << " heat_flux=" << heat_flux.info();
     return ss.str();
 }
 
@@ -467,7 +378,7 @@ void SFace::boundary_condition() {
                     double gm_near = solver->g_maxwell(near_cell.density, near_cell.temperature, cc);
                     g[i] = gm + near_cell.g_bp[i] - gm_near;
                     h[i] = solver->h_maxwell(mark.temperature, gm)
-                           + near_cell.h_bp[i] - solver->h_maxwell(near_cell.temperature, gm_near);
+                            + near_cell.h_bp[i] - solver->h_maxwell(near_cell.temperature, gm_near);
                 }
             }
             return;
@@ -564,17 +475,6 @@ void SFace::boundary_condition() {
 
 /// 算法函数
 void Scheme::do_step() {
-    /// pre-forcing
-    if (force_term) {
-#pragma omp parallel for
-        for (int j = 0; j < mesh_cell_num; j++) {
-            auto &cell = CELLS[j];
-            cell.update_force();
-        }
-    }
-    //pprint::debug << "pre-forcing";
-    //pprint::debug("DEBUG");
-
     /// non-forcing DUGKS
 #pragma omp parallel for
     for (int j = 0; j < mesh_cell_num; j++) {
@@ -639,15 +539,6 @@ void Scheme::do_step() {
     //pprint::debug << "face macro var";
     //pprint::debug("DEBUG");
 
-    /// post-forcing
-    if (force_term) {
-#pragma omp parallel for
-        for (int j = 0; j < mesh_cell_num; j++) {
-            auto &cell = CELLS[j];
-            cell.update_force();
-        }
-    }
-
     /// OpenMP loop end
     ++step;
     if (debug_mode) {
@@ -682,7 +573,7 @@ void Scheme::do_save() {
         pprint::error(prefix);
         throw std::invalid_argument("Cannot write to file.");
     }
-    switch (D) {
+    switch (mesh.dimension()) {
         case 2:
             fp << GEOM::tecplot_file_header(mesh,
                                             {"density", "temperature",
@@ -740,7 +631,7 @@ void Scheme::do_save() {
             count = 0;
         }
     }
-    if (D == 3) {
+    if (mesh.dimension() == 3) {
         count = 0;
         fp << std::endl << "## velocity-z" << std::endl;
         for (auto &cell : CELLS) {
@@ -769,7 +660,7 @@ void Scheme::do_save() {
             count = 0;
         }
     }
-    if (D == 3) {
+    if (mesh.dimension() == 3) {
         count = 0;
         fp << std::endl << "## heat_flux-z" << std::endl;
         for (auto &cell : CELLS) {
@@ -836,7 +727,7 @@ void Scheme::do_residual() {
     }
     pprint::info << "Residual:   step = " << step;
     pprint::info(prefix);
-    switch (D) {
+    switch (mesh.dimension()) {
         case 2:
             pprint::info << output_data_to_console(
                     {"density", "temperature", "velocity-x", "velocity-y", "heat_flux-x", "heat_flux-y"},

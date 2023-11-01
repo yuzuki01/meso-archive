@@ -4,6 +4,8 @@
 
 #define INCLUDE_MESH
 
+/// Mesh 宏定义
+#define MeshReaderReturn_NULL "NULL"
 #define MeshNode Vec(MESH::Node)
 #define MeshCell Vec(MESH::Cell)
 #define MeshFace Vec(MESH::Interface)
@@ -13,6 +15,15 @@
 #define MeshTypePHY 0
 #define MeshTypeDVS 1
 #define MeshTypeDVS_ParseAsPHY 2
+
+/// 边界条件宏定义
+#define BC_INTERFACE        0
+#define BC_INLET            1
+#define BC_OUTLET           2
+#define BC_ISOTHERMAL_WALL  3
+#define BC_ADIABAT_WALL     4
+#define BC_SYMMETRY         5
+#define BC_PERIODIC         6
 
 
 /// 3 维向量
@@ -178,7 +189,7 @@ public:
     int id;                     // 编号
     int type;                   // 类型
     int on_cell_id;             // 界面所在控制体编号
-    int inv_cell_id ;           // 另一控制体编号
+    int inv_cell_id ;           // 另一控制体编号（Interface为边界时，值为on_cell_id）
     int on_cell_face;           // 界面在界面所在控制体上的编号
     int inv_cell_face;          // 界面在另一控制体上的编号
     bool have_shadow_cell;      // 是否拥有影格子

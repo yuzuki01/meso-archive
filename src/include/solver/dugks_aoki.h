@@ -1,5 +1,5 @@
-#ifndef INCLUDE_DUGKS_AOKI
-#define INCLUDE_DUGKS_AOKI
+#ifndef SOLVER_DUGKS_AOKI
+#define SOLVER_DUGKS_AOKI
 #endif
 /**
  * 用于求解参考文献

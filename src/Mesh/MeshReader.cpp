@@ -283,7 +283,7 @@ std::string ConfigReader::operator[](const std::string &key) {
         } else {
             pprint::warn << "Cannot find var:" << key << " in config context, return \"NULL\".";
             pprint::warn("Config Reader");
-            return "NULL";
+            return MeshReaderReturn_NULL;
         }
     }
 }

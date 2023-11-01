@@ -6,6 +6,7 @@ int main(int argc, char **argv) {
     meso_init();
     // arg parse
     {
+        // debug switch
         if (arg_parser_switch(argc, argv, "-debug")) {
             try {
                 handle_debug();
@@ -23,6 +24,11 @@ int main(int argc, char **argv) {
             return handle_help();
         }
         std::string parsed_param;
+        // debug_func
+
+        // debug func
+        parsed_param = arg_parser_param(argc, argv, "--debug_func", "");
+        if (!parsed_param.empty()) return handle_debug_func(parsed_param);
         // create case
         parsed_param = arg_parser_param(argc, argv, "--create", "");
         if (!parsed_param.empty()) return handle_create_case(parsed_param);
@@ -73,6 +79,8 @@ int handle_case(const std::string &path) {
         return handle_solver<DUGKS_INCOMPRESSIBLE>(reader);
     } else if (solver_name == "dugks@aoki") {
         return handle_solver<DUGKS_AOKI>(reader);
+    } else if (solver_name == "dugks@shakhov") {
+        return handle_solver<DUGKS_SHAKHOV>(reader);
     } else if (solver_name == "wbdugks@shakhov") {
         return handle_solver<WBDUGKS_SHAKHOV>(reader);
     }
@@ -81,7 +89,7 @@ int handle_case(const std::string &path) {
 
 int handle_mesh(const std::string &path) {
     try {
-        MESH::Mesh mesh(0, "parsed_mesh");
+        MESH::Mesh mesh(MeshTypePHY, "parsed_mesh");
         mesh.load(path);
         mesh.BuildMesh();
         mesh.info();
@@ -150,4 +158,93 @@ void handle_debug() {
     pprint::warn << "Enter debug-mode.";
     pprint::warn("DEBUG");
     debug_mode = true;
+}
+
+int handle_debug_func(const std::string &_string) {
+    // 实例化网格
+    MESH::Mesh mesh(MeshTypeDVS_ParseAsPHY, "debug");
+    mesh.load(_string);
+    mesh.BuildMesh();
+    mesh.info();
+    // 赋值平衡态函数
+    pprint::debug << "f = feq start " << mesh.NELEM;
+    pprint::debug("Main");
+    const int dvs_num = mesh.NELEM;
+    double rho = 1.0, RT2 = 1.0;
+    VecDouble f(dvs_num), source_lsp(dvs_num), source_hsd(dvs_num);
+    Vector acc = {0.0, -0.2, 0.0};
+    Vec(LeastSecondParam) lsp(dvs_num);
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = mesh.CELLS[i];
+        f[i] = rho * exp(-(particle.pos * particle.pos) / RT2) / (Pi * RT2);
+        lsp[i] = GenerateLeastSecondParam(i, mesh);
+    }
+    pprint::debug << "f = feq";
+    pprint::debug("Main");
+    // 计算梯度
+    for (int i = 0; i < dvs_num; i++) {
+        auto &particle = mesh.CELLS[i];
+        int near_num = particle.near_cell_id.size();
+        Vector Sr(0.0, 0.0, 0.0);
+        for (int j = 0; j < near_num; j++) {
+            Sr += lsp[i].weight[j] * (f[particle.near_cell_id[j]] - f[i]) * lsp[i].dr[j];
+        }
+        Vector gradient;
+        gradient = {lsp[i].Cx * Sr, lsp[i].Cy * Sr, lsp[i].Cz * Sr};
+        source_lsp[i] = -acc * gradient;
+        source_hsd[i] = (2.0 * acc * particle.pos) / RT2 * f[i];
+    }
+    pprint::debug << "Grad[f]";
+    pprint::debug("Main");
+    // 输出梯度
+    std::stringstream ss;
+    ss << "output.dat";
+    std::ofstream fp;
+    fp.open(ss.str(), std::ios::out | std::ios::trunc);
+    // check
+    if (!fp.is_open()) {
+        pprint::error << "Cannot write to file: " << ss.str();
+        pprint::error("Main");
+        throw std::invalid_argument("Cannot write to file.");
+    }
+    fp << GEOM::tecplot_file_header(mesh, {"f", "g_lsp", "g_hsd"});
+    GEOM::tecplot_node_write(fp, mesh);
+    int count;
+    count = 0;
+    fp << std::endl << "## f" << std::endl;
+    for (int i = 0; i < dvs_num; i++) {
+        fp << "\t" << std::setprecision(DATA_PRECISION) << f[i];
+        if (count++ >= LINE_DATA_NUM) {
+            fp << std::endl;
+            count = 0;
+        }
+    }
+    count = 0;
+    fp << std::endl << "## source_lsp" << std::endl;
+    for (int i = 0; i < dvs_num; i++) {
+        fp << "\t" << std::setprecision(DATA_PRECISION) << source_lsp[i];
+        if (count++ >= LINE_DATA_NUM) {
+            fp << std::endl;
+            count = 0;
+        }
+    }
+    count = 0;
+    fp << std::endl << "## source_hsd" << std::endl;
+    for (int i = 0; i < dvs_num; i++) {
+        fp << "\t" << std::setprecision(DATA_PRECISION) << source_hsd[i];
+        if (count++ >= LINE_DATA_NUM) {
+            fp << std::endl;
+            count = 0;
+        }
+    }
+    // write geom
+    fp << std::endl << "## Geom" << std::endl;
+    for (auto &cell : mesh.CELLS) {
+        fp << GEOM::tecplot_cell_format(cell);
+    }
+    // write end
+    fp.close();
+    pprint::debug << "Output to file: " << ss.str();
+    pprint::debug("Main");
+    return 0;
 }
