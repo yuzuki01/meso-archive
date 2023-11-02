@@ -28,9 +28,12 @@ template int handle_solver<DUGKS_INCOMPRESSIBLE>(ConfigReader &reader);
 #ifdef SOLVER_DUGKS_AOKI
 template int handle_solver<DUGKS_AOKI>(ConfigReader &reader);
 #endif
-#ifdef SOLVER_DUGKS_SHAKHOV_H
+#ifdef SOLVER_DUGKS_SHAKHOV
 template int handle_solver<DUGKS_SHAKHOV>(ConfigReader &reader);
 #endif
-#ifdef SOLVER_WBDUGKS_SHAKHOV_H
+#ifdef SOLVER_WBDUGKS_SHAKHOV
 template int handle_solver<WBDUGKS_SHAKHOV>(ConfigReader &reader);
+#endif
+#ifdef SOLVER_WBDUGKS_PF
+template int handle_solver<WBDUGKS_PF>(ConfigReader &reader);
 #endif

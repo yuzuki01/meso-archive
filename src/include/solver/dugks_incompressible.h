@@ -30,11 +30,11 @@ public:
     inline double f_eq(double density,
                        const Vector &particle_velocity,
                        const Vector &flow_velocity) const;
-
+    using Scheme = DUGKS_INCOMPRESSIBLE;
     /// 算法内部类
     class Cell {
     public:
-        DUGKS_INCOMPRESSIBLE *solver;
+        Scheme *solver;
         int id;
         Vec(Residual) residual;
         /// 最小二乘法
@@ -47,7 +47,7 @@ public:
         Vec(Vector) slope_f;
 
         /// 函数
-        Cell(int cell_id, DUGKS_INCOMPRESSIBLE *Solver);
+        Cell(int cell_id, Scheme *Solver);
 
         void update_f_bp();
 
@@ -62,7 +62,7 @@ public:
 
     class Interface {
     public:
-        DUGKS_INCOMPRESSIBLE *solver;
+        Scheme *solver;
         int id;
         /// 宏观量
         double density, temperature;
@@ -71,7 +71,7 @@ public:
         VecDouble f, f_b;
 
         /// 函数
-        Interface(int face_id, DUGKS_INCOMPRESSIBLE *Solver);
+        Interface(int face_id, Scheme *Solver);
 
         void update_f_b();
 
@@ -98,5 +98,5 @@ public:
 
     void do_residual();
 
-    void do_crashed(DUGKS_INCOMPRESSIBLE::Cell &cell);
+    void do_crashed(Scheme::Cell &cell);
 };

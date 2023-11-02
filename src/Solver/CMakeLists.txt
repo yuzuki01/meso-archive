@@ -18,7 +18,8 @@ endif()
 
 file(GLOB SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/dugks/*.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/dugks/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/numerical/*.cpp)
 include_directories(${PROJECT_SOURCE_DIR}/../include)
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../build) # 指定输出文件目录为 build

@@ -6,7 +6,7 @@
 
 
 /// 网格生成
-MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, int mesh_type) {
+MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, const int mesh_type) {
     switch (mesh_type) {
         case MeshTypePHY: {
             MESH::Mesh mesh(mesh_type, reader["PHY_MESH"]);
@@ -19,18 +19,17 @@ MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, int mesh_type) {
         }
         case MeshTypeDVS_ParseAsPHY:
         case MeshTypeDVS: {
-            MESH::Mesh mesh(mesh_type, reader["DVS_MESH"]);
-            if (reader["DVS_MESH"] == "NULL") {
-                pprint::error << "Caught NULL when reading mesh from config.";
-                pprint::error("Mesh");
-                throw std::invalid_argument("Caught NULL when reading mesh from config.");
-            }
             std::stringstream ss;
             ss << "./case/" << reader["CASE_NAME"] << "/" << reader["DVS_MESH"];
             MESH::NEUReader neuReader(ss.str());
-            neuReader.parse(mesh);
-            mesh.BuildMesh();
-            return mesh;
+            if (neuReader.is_file_open()) {
+                MESH::Mesh mesh(mesh_type, reader["DVS_MESH"]);
+                neuReader.parse(mesh);
+                mesh.BuildMesh();
+                return mesh;
+            } else {
+                return GenerateMesh_Structure(reader, mesh_type);
+            }
         }
         default:
             pprint::error << "GenerateMeshFromConfig() caught invalid mesh type.";
@@ -39,53 +38,25 @@ MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, int mesh_type) {
     }
 }
 
-
-MESH::Mesh GenerateMeshGH(int dimension, double RT) {
-    // D1Q3
-    const double pv[3] = {-sqrt(3.0 * RT), 0.0, sqrt(3.0 * RT)};
-    const double pw[3] = {1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0};
-    MESH::Mesh mesh(MeshTypeDVS, "DVS-GH");
-    switch (dimension) {
-        case 2: {
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    Vector velocity(pv[i], pv[j], 0.0);
-                    double wi = pw[i] * pw[j];
-                    mesh.CELLS.emplace_back(velocity, wi, mesh.CELLS.size());
-                    mesh.update_max_discrete_velocity(velocity.magnitude());
-                }
-            }
+MESH::Mesh GenerateMesh_Structure(ConfigReader &reader, const int mesh_type) {
+    switch (mesh_type) {
+        case MeshTypeDVS:
+        case MeshTypeDVS_ParseAsPHY: {
+            /// generate DVS
+            if (reader["DVS_MESH"] == "GaussHermit") return GenerateMesh_GaussHermit(reader, mesh_type);
             break;
         }
-        case 3: {
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++)
-                    for (int k = 0; k < 3; k++) {
-                        Vector velocity(pv[i], pv[j], pv[k]);
-                        double wi = pw[i] * pw[j] * pw[k];
-                        mesh.CELLS.emplace_back(velocity, wi, mesh.CELLS.size());
-                        mesh.update_max_discrete_velocity(velocity.magnitude());
-                    }
-            }
-            break;
-        }
+        case MeshTypePHY:
         default:
-            throw std::invalid_argument("GenerateMeshGH() caught invalid dimension.");
+            break;
     }
-    int Q = 1, D = dimension;
-    for (int i = 0; i < D; i++) Q *= 3;
+    /// non-break
     std::stringstream ss;
-    ss << "D" << D << "Q" << Q;
-    mesh.name = ss.str();
-    mesh.status = 3;
-    mesh.NELEM = mesh.CELLS.size();
-    mesh.NDFVL = mesh.NDFCD = dimension;
-    mesh.shrink_to_fit();
-    pprint::note << "Generate " << ss.str() << " DVS mesh.";
-    pprint::note("Mesh");
-    return mesh;
+    ss << "GenerateMesh_Structure() got unsupported mesh_type=" << mesh_type;
+    pprint::error << ss.str();
+    pprint::error("Solver");
+    throw std::invalid_argument(ss.str());
 }
-
 
 /// 算法类构造函数
 DUGKS_INCOMPRESSIBLE::DUGKS_INCOMPRESSIBLE(ConfigReader &reader) {
@@ -101,7 +72,7 @@ DUGKS_INCOMPRESSIBLE::DUGKS_INCOMPRESSIBLE(ConfigReader &reader) {
     L = stod(reader["LENGTH"]);
     /// 物理网格
     mesh = GenerateMeshFromConfig(reader, MeshTypePHY);
-    DVS = GenerateMeshGH(mesh.dimension(), RT);
+    DVS = GenerateMeshFromConfig(reader, MeshTypeDVS);
     for (auto &mark : reader.marks) {
         mesh.set_mark_params(mark);
     }
@@ -337,7 +308,7 @@ WBDUGKS_SHAKHOV::WBDUGKS_SHAKHOV(ConfigReader &reader) {
     u = Ma * a;
     dynamic_viscosity_ref = Kn * sqrt(Pi) * (
             (5.0 * (vhs_alpha + 1.0) * (vhs_alpha + 2.0)) / (4.0 * (5.0 - 2.0 * vhs_omega) * (7.0 - 2.0 * vhs_omega))
-            );
+    );
     Re = rho * u * L / dynamic_viscosity_ref;
     dt = stod(reader["CFL"]) * (mesh.min_mesh_size / DVS.max_discrete_velocity);
     half_dt = dt / 2.0;

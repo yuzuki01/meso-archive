@@ -4,7 +4,7 @@
  **/
 
 #include <Solver.h>
-
+#ifdef SOLVER_WBDUGKS_SHAKHOV
 
 using Scheme = WBDUGKS_SHAKHOV;
 using SCell = Scheme::Cell;
@@ -862,3 +862,5 @@ void Scheme::do_crashed(Scheme::Cell &cell) {
     pprint::warn << "Caught crashed value: " << cell.info();
     pprint::warn(prefix);
 }
+
+#endif //SOLVER_WBDUGKS_SHAKHOV

@@ -19,10 +19,12 @@
 #include "solver/dugks_aoki.h"
 #include "solver/dugks_shakhov.h"
 #include "solver/wbdugks_shakhov.h"
+/// 多相求解器
+#include "solver/wbdugks_phase_field.h"
 
 /// 函数
-MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, int mesh_type);
-MESH::Mesh GenerateMeshGH(int dimension, double RT);
+MESH::Mesh GenerateMeshFromConfig(ConfigReader &reader, const int mesh_type);
+MESH::Mesh GenerateMesh_Structure(ConfigReader &reader, const int mesh_type);
 
 /// 可执行程序调用入口函数
 template <class Solver>

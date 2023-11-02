@@ -61,12 +61,13 @@ Cell::Cell(const VecStr &list) {
     face_id.resize(face_num, -1);
 }
 
-Cell::Cell(const Vector &particle_velocity, double weight, int cell_id) {
+Cell::Cell(const Vector &particle_velocity, double weight, int cell_id, int inv_cell) {
     id = cell_id;
     type = -1;
     volume = weight;
     have_shadow_cell = false;   // 是否拥有影格子
     shadow_cell_id = -1;        // 对应影格子编号
+    inv_cell_id = inv_cell;
     pos = particle_velocity;
 }
 

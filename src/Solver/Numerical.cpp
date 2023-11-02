@@ -84,6 +84,6 @@ void Residual::update(double value) {
     now = value;
 }
 
-double Residual::compute() {
+double Residual::compute() const {
     return fabs((now - old) / (old == 0.0 ? 1.0 : old));
 }

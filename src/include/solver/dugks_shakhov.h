@@ -1,7 +1,7 @@
-#ifndef SOLVER_DUGKS_SHAKHOV_H
-#define SOLVER_DUGKS_SHAKHOV_H
+#ifndef SOLVER_DUGKS_SHAKHOV
+#define SOLVER_DUGKS_SHAKHOV
 
-#endif //SOLVER_DUGKS_SHAKHOV_H
+#endif //SOLVER_DUGKS_SHAKHOV
 /**
  * Compressible DUGKS
  *      BGK-Shakhov model

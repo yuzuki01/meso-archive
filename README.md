@@ -3,28 +3,30 @@
 基于气体动理学的 CFD 求解器，主要是 Discrete Unified Gas Kinetic Scheme (DUGKS) 的实现。
 
 ## 已实现
-<hr>
-<li>启动参数解析</li>
-<li>配置文件读取</li>
-<li>支持数学运算的空间向量 Vector 类</li>
-<li>2D / 3D 网格读取</li>
-<li>2D / 3D 网格界面构建</li>
-<li>2D / 3D 网格几何参数计算</li>
-<li>2D / 3D 网格法向量构建</li>
-<li>网格梯度通用型求解函数</li>
-<li>不可压缩 DUGKS 求解器 [dugks@incompressible] (D2Q9 & D3Q27)</li>
-<li>残差管理</li>
-<li>动态链接库接口 (供 Python ctypes 调用)</li>
-<li>Thermal Creep 算例复现的求解器 [dugks@aoki] dugks@shakhov 的 2 维特殊情况</li>
-<hr>
 
-## 待实现
+| 求解器 | 碰撞模型 | 其他特性 | 备注 |
+| :----: | :----: | :----: | :----: |
+| dugks@incompressible | BGK |-| Stable |
+| dugks@shakhov | BGK-Shakhov | Limiter | UNSTABLE for Ma > 1 |
+| dugks@aoki | BGK | 等价于 BGK-Shakhov (K=0, Pr=1) | Ray-effect |
+| wbdugks | BGK-Shakhov | Limiter | Sharing with dugks@shakhov |
 
-<hr>
-<li>wbdugks@shakhov 可压缩求解器</li>
-<hr>
+## 未来计划
+
+### Nov 2, 2023
+ - [开发] wbdugks@phase_field 多相流求解器
+ - [重要] 未来可能放弃 Windows 平台的兼容
+
 
 ## Quick Start
+
+### 环境配置
+
+|  | version |
+|:---:|:---:|
+| gcc | \>=13.2.x |
+| cmake | \>=3.25.x |
+| Python | \>=3.9.x |
 
 ### 构建项目
 

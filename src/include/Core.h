@@ -50,7 +50,8 @@
 #define VecStr Vec(std::string)
 #define VecInt Vec(int)
 #define VecDouble Vec(double)
-#define MapInt std::unordered_map<std::string, int>
+#define Map(x, y) std::unordered_map<x, y>
+#define MapInt Map(std::string, int)
 
 
 /**
@@ -60,12 +61,15 @@
 
 class Reader {
 protected:
+    bool file_opened = false;
     std::string reader_name;
     VecStr lines;
 public:
     explicit Reader(const std::string &name, const std::string &file_path);
 
     ~Reader() = default;
+
+    bool is_file_open() const;
 };
 
 namespace pprint {

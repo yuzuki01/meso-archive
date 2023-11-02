@@ -442,7 +442,7 @@ void MESH::construct_shadow_cell(Interface &face, Mesh &mesh) {
     auto &cell = mesh.CELLS[face.on_cell_id];
     int shadow_cell_id = mesh.SHADOW_CELLS.size();
     Vector shadow_cell_pos = 2.0 * face.pos - cell.pos;
-    mesh.SHADOW_CELLS.emplace_back(shadow_cell_pos, cell.volume, shadow_cell_id);
+    mesh.SHADOW_CELLS.emplace_back(shadow_cell_pos, cell.volume, shadow_cell_id, -1);
     cell.have_shadow_cell = true;
     cell.shadow_cell_id = shadow_cell_id;
 }

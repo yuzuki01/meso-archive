@@ -3,7 +3,7 @@
  */
 
 #include <Solver.h>
-
+#ifdef SOLVER_DUGKS_AOKI
 
 using Scheme = DUGKS_AOKI;
 using SCell = Scheme::Cell;
@@ -547,3 +547,5 @@ void Scheme::do_crashed(DUGKS_AOKI::Cell &cell) {
     pprint::warn << "Caught crashed value: " << cell.info();
     pprint::warn(prefix);
 }
+
+#endif // SOLVER_AOKI_DUGKS

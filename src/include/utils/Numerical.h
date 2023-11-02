@@ -14,5 +14,8 @@ protected:
 public:
     explicit Residual(double value) : now(value), old(value) {};
     void update(double value);
-    double compute();
+    double compute() const;
 };
+
+/// 高斯型积分
+MESH::Mesh GenerateMesh_GaussHermit(ConfigReader &reader, int mesh_type);

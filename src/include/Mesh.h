@@ -51,7 +51,7 @@ public:
     Vector &operator-=(Vector &other);              // 自减
     Vector &operator+=(const Vector &other);        // 自加
     Vector &operator-=(const Vector &other);        // 自减
-    Vector &operator*=(double k);                   // 自乘
+    Vector &operator*=(double k);                   // 自乘 double
     Vector &operator/=(double k);                   // 自除
     double magnitude();                             // 取模
     void norm();                                    // 归一
@@ -160,6 +160,14 @@ class MESH::Cell {
 public:
     int id;                         // 编号
     int type;                       // 类型
+
+    /// 结构 DVS 网格对应的反向的单元编号
+    ///     用于标准反弹边界等
+    int inv_cell_id;
+    /// 结构 DVS 网格对应的所在层数编号和层数内单元个数、
+    ///     用于镜面反射边界等
+    int on_layer_id, layer_cell_num;
+
     int face_num;                   // 界面个数
     bool have_shadow_cell;          // 是否拥有影格子
     int shadow_cell_id;             // 对应影格子编号
@@ -173,7 +181,7 @@ public:
     // 按照 Gambit 格式     控制体编号|控制体类型|结点个数|结点编号
     explicit Cell(const VecStr &list);
     // 自定义生成离散速度空间构造函数
-    Cell(const Vector &particle_velocity, double weight, int cell_id);
+    Cell(const Vector &particle_velocity, double weight, int cell_id, int inv_cell);
 
     void shrink_to_fit();
 
